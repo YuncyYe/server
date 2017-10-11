@@ -1,0 +1,28 @@
+create user ssl_user1@localhost;
+grant select on test.* to ssl_user1@localhost require SUBJECT "/C=FI/ST=Helsinki/L=Helsinki/O=MariaDB/CN=client";
+create user ssl_user2@localhost;
+grant select on test.* to ssl_user2@localhost;
+flush privileges;
+#protected key with passphrase
+Variable_name	Value
+Ssl_cipher	AES256-SHA
+#unprotected key with passphrase
+Variable_name	Value
+Ssl_cipher	AES256-SHA
+#finger print with valid fp_list
+Variable_name	Value
+Ssl_cipher	AES256-SHA
+#finger print with non existing fp_list
+#finger print with valid fp
+Variable_name	Value
+Ssl_cipher	AES256-SHA
+#finger print with valid fp (without colons)
+Variable_name	Value
+Ssl_cipher	AES256-SHA
+#finger print with invalid fp
+#force tls/ssl by specifying fp_list
+Variable_name	Value
+Ssl_cipher	DHE-RSA-AES256-GCM-SHA384
+#force tls/ssl by specifying invalid fp (must fail)
+connection default;
+drop user ssl_user1@localhost, ssl_user2@localhost;

@@ -2270,9 +2270,19 @@ sub environment_setup {
                "$bindir/bin/mariadb_config");
   if ($client_config_exe)
   {
-    my $tls_info= `$client_config_exe --tlsinfo`;
-    ($ENV{CLIENT_TLS_LIBRARY},$ENV{CLIENT_TLS_LIBRARY_VERSION})=
-      split(/ /, $tls_info, 2);
+    my $tls_info= `$exe_mysql --version`;
+    if (index($tls_info, "OpenSSL") != -1) {
+      $ENV{CLIENT_TLS_LIBRARY}= "OpenSSL";
+    }
+    elsif (index($tls_info, "LibreSSL") != -1) {
+      $ENV{CLIENT_TLS_LIBRARY}= "LibreSSL";
+    }
+    elsif (index($tls_info, "GnuTLS") != -1) {
+      $ENV{CLIENT_TLS_LIBRARY}= "GnuTLS";
+    }
+    elsif (index($tls_info, "Schannel") != -1) {
+      $ENV{CLIENT_TLS_LIBRARY}= "Schannel";
+    }
   }
   my $exe_mysqld= find_mysqld($basedir);
   $ENV{'MYSQLD'}= $exe_mysqld;

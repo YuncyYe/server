@@ -1371,6 +1371,14 @@ static bool do_connect(MYSQL *mysql, const char *host, const char *user,
   }
   mysql_options(mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (char*)&opt_ssl_verify_server_cert);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP,
+                (void*)opt_ssl_fp);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP_LIST,
+                (void*)opt_ssl_fp_list);
+#if !defined(CC_HAVE_SCHANNEL)
+  mysql_options(mysql, MARIADB_OPT_TLS_PASSPHRASE,
+                (void*)opt_ssl_passphrase);
+#endif
 #endif
   if (opt_protocol)
     mysql_options(mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
@@ -1713,14 +1721,24 @@ static void usage(int version)
 #else
   const char* readline= "readline";
 #endif
+  char *tls_library;
+
+  mariadb_get_infov(NULL, MARIADB_TLS_LIBRARY, &tls_library);
 
 #ifdef HAVE_READLINE
-  printf("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n",
+  printf("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
+         "Client library Ver %s, source revision %s\n"
+         "TLS/SSL support: %s\n",
 	 my_progname, VER, MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE,
-         readline, rl_library_version);
+         readline, rl_library_version,
+         mysql_get_client_info(), CC_SOURCE_REVISION, tls_library);
 #else
-  printf("%s  Ver %s Distrib %s, for %s (%s), source revision %s\n", my_progname, VER,
-	MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE,SOURCE_REVISION);
+  printf("%s  Ver %s Distrib %s, for %s (%s), source revision %s\n"
+         "Client library Ver %s, source revision %s\n"
+         "TLS/SSL support: %s",
+         my_progname, VER,
+	       MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE,SOURCE_REVISION,
+         mysql_get_client_info(), CC_SOURCE_REVISION, tls_library);
 #endif
 
   if (version)

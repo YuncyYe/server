@@ -18,7 +18,6 @@
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
 #if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-
   {"ssl", OPT_SSL_SSL,
    "Enable SSL for connection (automatically enabled with other flags).",
    &opt_use_ssl, &opt_use_ssl, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
@@ -52,6 +51,22 @@
    "when connecting. This option is disabled by default.",
    &opt_ssl_verify_server_cert, &opt_ssl_verify_server_cert,
    0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
+  {"ssl-fp", OPT_SSL_FP,
+   "Verify server certificate's finger print against "
+   "specified sha1 finger print (implies --ssl).",
+   &opt_ssl_fp, &opt_ssl_fp, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
+  {"ssl-fplist", OPT_SSL_FP_LIST,
+   "Verify server certificate's finger print "
+   "against the specified file which must contain one or more sha1 finger prints (implies --ssl).",
+   &opt_ssl_fp_list, &opt_ssl_fp_list, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
+#if !defined(CC_HAVE_SCHANNEL) && !defined(HAVE_YASSL)
+  {"ssl-passphrase", OPT_SSL_PASSPHRASE,
+    "Passphrase for passphrase protected key",
+   &opt_ssl_passphrase, &opt_ssl_passphrase, 0, GET_STR, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
+#endif
 #endif
 #endif /* HAVE_OPENSSL */
 #endif /* SSLOPT_LONGOPTS_INCLUDED */
