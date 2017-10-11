@@ -1686,6 +1686,14 @@ static int connect_to_db(char *host, char *user,char *passwd)
   }
   mysql_options(&mysql_connection,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (char*)&opt_ssl_verify_server_cert);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP,
+                (char*)&opt_ssl_fp);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP_LIST,
+                (char*)&opt_ssl_fp_list);
+#if !defined(CC_HAVE_SCHANNEL)
+  mysql_options(mysql, MARIADB_OPT_TLS_PASSPHRASE,
+                (char*)&opt_ssl_passphrase);
+#endif
 #endif
   if (opt_protocol)
     mysql_options(&mysql_connection,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);

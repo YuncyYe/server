@@ -451,6 +451,14 @@ static MYSQL *db_connect(char *host, char *database,
   }
   mysql_options(mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (char*)&opt_ssl_verify_server_cert);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP,
+                (void*)opt_ssl_fp);
+  mysql_options(mysql, MARIADB_OPT_SSL_FP_LIST,
+                (void*)opt_ssl_fp_list);
+#if !defined(CC_HAVE_SCHANNEL)
+  mysql_options(mysql, MARIADB_OPT_TLS_PASSPHRASE,
+                (void*)opt_ssl_passphrase);
+#endif
 #endif
   if (opt_protocol)
     mysql_options(mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);

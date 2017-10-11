@@ -21,6 +21,9 @@ openssl rsa -in server-key.pem -out server-key.pem
 # sign the server certificate with CA certificate
 openssl ca -keyfile cakey.pem -days 7300 -batch -cert cacert.pem -policy policy_anything -out server-cert.pem -infiles demoCA/server-req.pem
 
+# create sha1 finger print of server certificate
+openssl x509 -in server-cert.pem -sha1 -fingerprint -noout | sed 's/SHA1 Fingerprint=//g' > server-cert.sha1
+
 openssl req -newkey rsa:8192 -keyout server8k-key.pem -out demoCA/server8k-req.pem -days 7300 -nodes -subj '/CN=server8k/C=FI/ST=Helsinki/L=Helsinki/O=MariaDB'
 openssl rsa -in server8k-key.pem -out server8k-key.pem
 openssl ca -keyfile cakey.pem -days 7300 -batch -cert cacert.pem -policy policy_anything -out server8k-cert.pem -infiles demoCA/server8k-req.pem
@@ -28,6 +31,10 @@ openssl ca -keyfile cakey.pem -days 7300 -batch -cert cacert.pem -policy policy_
 openssl req -newkey rsa:1024 -keyout client-key.pem -out demoCA/client-req.pem -days 7300 -nodes -subj '/CN=client/C=FI/ST=Helsinki/L=Helsinki/O=MariaDB'
 openssl rsa -in client-key.pem -out client-key.pem
 openssl ca -keyfile cakey.pem -days 7300 -batch -cert cacert.pem -policy policy_anything -out client-cert.pem -infiles demoCA/client-req.pem
+
+# generate password protected keys
+openssl rsa -des -in client-key.pem -passout pass:qwerty -out client-key-enc.pem
+openssl rsa -des -in server-key.pem -passout pass:qwerty -out server-key-enc.pem
 
 # with SubjectAltName, only for OpenSSL 1.0.2+
 cat > demoCA/sanext.conf <<EOF

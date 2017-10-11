@@ -32,6 +32,11 @@ SSL_STATIC char *opt_ssl_crl     = 0;
 SSL_STATIC char *opt_ssl_crlpath = 0;
 #ifdef MYSQL_CLIENT
 SSL_STATIC my_bool opt_ssl_verify_server_cert= 0;
+SSL_STATIC char *opt_ssl_fp = 0;
+SSL_STATIC char *opt_ssl_fp_list = 0;
+#if !defined(CC_HAVE_SCHANNEL) && !defined(HAVE_YASSL)
+SSL_STATIC char *opt_ssl_passphrase = 0;
+#endif
 #endif
 #endif
 #endif /* SSLOPT_VARS_INCLUDED */

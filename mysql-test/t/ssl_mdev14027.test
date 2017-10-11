@@ -1,0 +1,64 @@
+# Tests for SSL connections, only run if mysqld is compiled
+# with support for SSL.
+-- source include/have_ssl_communication.inc
+
+# Save the initial number of concurrent sessions
+--source include/count_sessions.inc
+
+--enable_warnings
+create user ssl_user1@localhost;
+grant select on test.* to ssl_user1@localhost require SUBJECT "/C=FI/ST=Helsinki/L=Helsinki/O=MariaDB/CN=client";
+create user ssl_user2@localhost;
+grant select on test.* to ssl_user2@localhost;
+flush privileges;
+
+if ($CLIENT_TLS_LIBRARY != "Schannel") {
+--echo #protected key with passphrase
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key-enc.pem --ssl-passphrase=qwerty --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+--echo #unprotected key with passphrase
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+}
+if ($CLIENT_TLS_LIBRARY == "Schannel") {
+--echo #protected key with passphrase
+--echo Variable_name	Value
+--echo Ssl_cipher	AES256-SHA
+--echo #unprotected key with passphrase
+--echo Variable_name	Value
+--echo Ssl_cipher	AES256-SHA
+}
+
+# test finger print list
+--echo #finger print with valid fp_list
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-fplist=$MYSQL_TEST_DIR/std_data/server-cert.sha1 --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+--echo #finger print with non existing fp_list
+--error 1
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-fplist=$MYSQL_TEST_DIR/std_data/file_not_found.sha1 --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+perl;
+  use strict;
+  my $infile= "$ENV{MYSQL_TEST_DIR}/std_data/server-cert.sha1";
+  open(my $fh, '<:encoding(UTF-8)', $infile);
+  my $sha_colon= $fh;
+  chomp $sha_colon;
+  close($fh);
+  my $sha_no_colon= $sha_colon;
+  $sha_no_colon= ~ s/://g;
+EOF
+--echo #finger print with valid fp
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-fp=$sha_colon --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+
+--echo #finger print with valid fp (without colons)
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-fp=$sha_no_colon --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+--echo #finger print with invalid fp
+--error 1
+--exec $MYSQL -ussl_user1 --ssl-cert=$MYSQL_TEST_DIR/std_data/client-cert.pem --ssl-key=$MYSQL_TEST_DIR/std_data/client-key.pem --ssl-fp=11:11:11:11 --ssl-cipher=AES256-SHA -e"SHOW status like 'ssl_cipher';";
+
+--echo #force tls/ssl by specifying fp_list
+--exec $MYSQL -ussl_user2 --ssl-fplist=$MYSQL_TEST_DIR/std_data/server-cert.sha1 -e"SHOW STATUS LIKE 'ssl_cipher';"
+
+--echo #force tls/ssl by specifying invalid fp (must fail)
+--error 1
+--exec $MYSQL -ussl_user2 --ssl-fp=01:02:03:04:05 -e"SHOW STATUS LIKE 'ssl_cipher';"
+connection default;
+drop user ssl_user1@localhost, ssl_user2@localhost;
+
+
